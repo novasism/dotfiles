@@ -30,3 +30,6 @@ export PATH=/opt/local/bin:/opt/local/sbin:/Users/torjus/bin:/opt/local/bin:/usr
 
 # Auto complete / after ..
 zstyle ':completion:*' special-dirs true
+
+# Restore to original contents after closing vim
+export TERM=rxvt
