@@ -33,3 +33,15 @@ zstyle ':completion:*' special-dirs true
 
 # Restore to original contents after closing vim
 export TERM=rxvt
+
+# Toggle background process with ctrl+z
+ctrlz () {
+	if [[ $#BUFFER -eq 0 ]]; then
+		fg
+		zle redisplay
+	else
+		zle push-input
+	fi
+}
+zle -N ctrlz
+bindkey '^Z' ctrlz
