@@ -39,3 +39,6 @@ set listchars=tab:▸\ ,eol:¬
 "Invisible character colors
 highlight NonText guifg=#cccccc
 highlight SpecialKey guifg=#cccccc
+
+"Exit insert mode with jj
+inoremap jj <ESC>
