@@ -22,6 +22,9 @@ set ruler
 "Show command in bottom right portion of the screen
 set showcmd
 
+"Always show the status line
+set laststatus=2
+
 " case insensitive search
 set ignorecase
 set smartcase
