@@ -7,7 +7,7 @@ colorscheme solarized
 
 set number
 
-set guifont=Monaco:h12
+set guifont=Monaco:h13
 
 set enc=utf8
 
