@@ -1,6 +1,8 @@
 " Use Vim settings, rather then Vi settings (much better!).
 " This must be first, because it changes other options as a side effect.
 set nocompatible
+
+let g:solarized_visibility="low"    "default value is normal
 syntax on
 set background=dark
 colorscheme solarized
