@@ -1,15 +1,12 @@
 " Use Vim settings, rather then Vi settings (much better!).
 " This must be first, because it changes other options as a side effect.
 set nocompatible
-
-let g:solarized_visibility="low"    "default value is normal
 syntax on
-set background=dark
-colorscheme solarized
+colorscheme Tomorrow-Night
 
 set number
 
-set guifont=Monaco:h13
+set guifont=Menlo:h14
 
 set enc=utf8
 
@@ -50,3 +47,9 @@ set listchars=tab:▸\ ,eol:¬
 
 "Exit insert mode with jj
 inoremap jj <ESC>
+
+" Source the vimrc file after saving it
+if has("autocmd")
+  autocmd bufwritepost .vimrc source $MYVIMRC
+endif
+
