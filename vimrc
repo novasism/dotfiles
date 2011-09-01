@@ -45,6 +45,10 @@ set listchars=tab:▸\ ,eol:¬
 " highlight NonText guifg=#cccccc
 " highlight SpecialKey guifg=#cccccc
 
+" Color status bar of current split
+hi StatusLine guifg=#CD5907 guibg=fg
+hi StatusLineNC guifg=#808080 guibg=#080808
+
 "Exit insert mode with jj
 inoremap jj <ESC>
 
