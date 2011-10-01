@@ -4,23 +4,21 @@ var glob = require('glob'),
 	fs = require('fs'),
 	path = require('path');
 
-var destionation = path.join(process.env.HOME, '/Development/dotfiles-test');
+var destination = path.join(process.env.HOME, '/Development/dotfiles-test');
 
 // Find symlinks
 glob('*/*.symlink', function (err, matches) {
 	matches.forEach( function (match) {
+		var fileName, filePath, target;
+
 		// Remove / from the end if it is present
-		// TODO: Improve it
-		match = match.split('');
-		if (match.slice(-1)[0] === '/') {
-			match.pop();
-		}
-		match = match.join('');
+		match = match.replace(/^(.+[^\/])\/?/, '$1');
 
-		var file = match.split('/').slice(-1)[0].split('.symlink')[0],
-			match = path.join( process.cwd(), match ),
-			target = path.join(destination, '/', file);
+		fileName = match.split('/').slice(-1)[0].split('.symlink')[0];
+		filePath = path.join( process.cwd(), match );
+		target = path.join(destination, '/', fileName);
 
-		fs.symlinkSync(match, target);
+		fs.symlinkSync(filePath, target);
 	});
 });
+
