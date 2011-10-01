@@ -6,19 +6,56 @@ var glob = require('glob'),
 
 var destination = path.join(process.env.HOME, '/Development/dotfiles-test');
 
+var handleFile = function (file, cb) {
+	var fileName, filePath, target;
+
+	fileName = file.split('/').slice(-1)[0].split('.symlink')[0];
+	filePath = path.join( process.cwd(), file );
+	target = path.join(destination, '/', fileName);
+
+	if (path.existsSync( target )) {
+		process.stdin.resume();
+		console.log('File %s already exists, what would you like to do?');
+	} else {
+	//	fs.symlinkSync(filePath, target);
+	}
+}
+
+var fixFilePath = function (fp) {
+	// Remove / from the end if it is present
+	return fp.replace(/^(.+[^\/])\/?/, '$1');
+}
+
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', function (chunk) {
+	console.log('hi');
+});
+
 // Find symlinks
 glob('*/*.symlink', function (err, matches) {
+	var index = 0,
+		iter = function () {
+			handleFile( fixFilePath( matches[ index ] ), iter );
+		};
+
+	handleFile(fixFilePath( matches[ index ] ), iter );
+
+/*
 	matches.forEach( function (match) {
 		var fileName, filePath, target;
-
-		// Remove / from the end if it is present
-		match = match.replace(/^(.+[^\/])\/?/, '$1');
 
 		fileName = match.split('/').slice(-1)[0].split('.symlink')[0];
 		filePath = path.join( process.cwd(), match );
 		target = path.join(destination, '/', fileName);
 
-		fs.symlinkSync(filePath, target);
+		if (path.existsSync( target )) {
+			process.stdin.resume();
+		} else {
+			fs.symlinkSync(filePath, target);
+		}
 	});
+*/
+	
 });
+
 
