@@ -40,51 +40,77 @@ Installer.prototype.processFiles = function () {
 	});
 };
 
-Installer.prototype.handleFile = function (file, cb) {
-	file = file.replace(/^(.+[^\/])\/?/, '$1');
+Installer.prototype.handleFile = (function (file, cb) {
+	var i;
 
-	this.currentFile = new this.File( file, cb );
-	this.currentFile.on('file exists', function (data) {
-		var i = readline.createInterface(process.stdin, process.stdout, null);
+	function closePrompt() {
+		i.close();
+		process.stdin.destroy();
+	}
 
-		i.question('File ' + data.fileName + ' already exists, what do you want to do?\n', function (answer) {
-			var close = true;
+	function stdin (input) {
+		var close = true;
 
-			switch (answer) {
-				case 'o':
-				case 'overwrite':
-					console.log('overwrite');
-					break;
+		switch (input) {
+			case 'o':
+			case 'overwrite':
+				console.log('overwrite');
+				break;
 
-				case 'b':
-				case 'backup':
-					console.log('backup');
-					break;
+			case 'b':
+			case 'backup':
+				console.log('backup');
+				break;
 
-				default:
-					// @TODO: Reask
-					console.log('I don\'t understand');
-					close = false;
+			case 'q':
+			case 'quit':
+				closePrompt();
 
-					break;
-			}
+				return;
 
-			if (close) {
-				i.close();
-				process.stdin.destroy();
-			}
+			case '?':
+				console.log('o = overwrite \nb = backup \nq = quit \n? = help');
+				close = false;
+
+				break;
+
+			default:
+				console.log('Huh?!?');
+				close = false;
+
+				break;
+		}
+
+		if (close) {
+			closePrompt();
+		} else {
+			i.prompt();
+		}
+	}
+
+	return function (file, cb) {
+		file = file.replace(/^(.+[^\/])\/?/, '$1');
+
+		this.currentFile = new this.File( file, cb );
+		this.currentFile.on('file exists', function (data) {
+			i = readline.createInterface(process.stdin, process.stdout, null);
+
+			i.question('File ' + data.fileName + ' already exists, what do you want to do? [o,b,q,?]\n', stdin);
+			i.on('line', stdin);
 		});
-	});
 
-	this.currentFile.symlink();
-};
+		this.currentFile.on('file transfer complete', cb);
+
+		this.currentFile.symlink();
+	}
+}());
 
 Installer.prototype.File = function (file, cb) {
 	this.callback = cb;
 
 	this.fileName = file.split('/').slice(-1)[0].split('.symlink')[0];
 	this.filePath = path.join( process.cwd(), file );
-	this.targetFile = path.join(Installer.BASE_PATH, '/', file);
+	this.targetFile = path.join(Installer.BASE_PATH, '/', '.' + this.fileName);
 };
 _File = Installer.prototype.File;
 util.inherits( _File, events.EventEmitter );
@@ -92,10 +118,14 @@ util.inherits( _File, events.EventEmitter );
 _File.prototype.overwrite = function () {};
 _File.prototype.backup = function () {};
 _File.prototype.symlink = function () {
-	this.emit('file exists', this);
+	var self = this;
+
 	if (path.existsSync( this.targetFile )) {
-		
+		this.emit('file exists', this);
 	} else {
+		fs.symlink( this.filePath, this.targetFile, function () {
+			self.emit('file transfer complete', self);
+		});
 	}
 };
 
