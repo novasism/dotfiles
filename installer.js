@@ -12,6 +12,8 @@ var Installer = function () {
 	this.files = [];
 	this.currentFile = null;
 
+	this._interface = readline.createInterface(process.stdin, process.stdout, null);
+
 	this.findFiles( this.processFiles );
 };
 
@@ -40,70 +42,71 @@ Installer.prototype.processFiles = function () {
 	});
 };
 
-Installer.prototype.handleFile = (function (file, cb) {
-	var i;
+Installer.prototype.handleFile = function (file, cb) {
+	var self = this;
 
-	function closePrompt() {
-		i.close();
-		process.stdin.destroy();
+	file = file.replace(/^(.+[^\/])\/?/, '$1');
+
+	this.currentFile = new this.File( file, cb );
+
+	this.currentFile.on('file exists', function (data) {
+		self._interface.question(
+			'File ' + data.fileName + ' already exists, what do you want to do? [o,b,q,?]\n',
+			self._stdin.bind( self ) 
+		);
+		self._interface.on('line', self._stdin);
+	});
+
+	this.currentFile.on('file transfer complete', cb);
+
+	this.currentFile.symlink();
+};
+
+Installer.prototype._stdin = function (input) {
+	var close = true;
+
+	switch (input) {
+		case 'o':
+		case 'overwrite':
+			console.log('overwrite');
+			this.currentFile.overwrite();
+			break;
+
+		case 'b':
+		case 'backup':
+			console.log('backup');
+			break;
+
+		case 'q':
+		case 'quit':
+			this._closePrompt();
+
+			return;
+
+		case '?':
+			console.log('o = overwrite \nb = backup \nq = quit \n? = help');
+			close = false;
+
+			break;
+
+		default:
+			console.log('Huh?!?');
+			close = false;
+
+			break;
 	}
 
-	function stdin (input) {
-		var close = true;
-
-		switch (input) {
-			case 'o':
-			case 'overwrite':
-				console.log('overwrite');
-				break;
-
-			case 'b':
-			case 'backup':
-				console.log('backup');
-				break;
-
-			case 'q':
-			case 'quit':
-				closePrompt();
-
-				return;
-
-			case '?':
-				console.log('o = overwrite \nb = backup \nq = quit \n? = help');
-				close = false;
-
-				break;
-
-			default:
-				console.log('Huh?!?');
-				close = false;
-
-				break;
-		}
-
-		if (close) {
-			closePrompt();
-		} else {
-			i.prompt();
-		}
+	if (close) {
+		this._closePrompt();
+	} else {
+		this._interface.prompt();
 	}
+}
 
-	return function (file, cb) {
-		file = file.replace(/^(.+[^\/])\/?/, '$1');
-
-		this.currentFile = new this.File( file, cb );
-		this.currentFile.on('file exists', function (data) {
-			i = readline.createInterface(process.stdin, process.stdout, null);
-
-			i.question('File ' + data.fileName + ' already exists, what do you want to do? [o,b,q,?]\n', stdin);
-			i.on('line', stdin);
-		});
-
-		this.currentFile.on('file transfer complete', cb);
-
-		this.currentFile.symlink();
-	}
-}());
+Installer.prototype._closePrompt = function () {
+	this._interface.close();
+	process.stdin.destroy();
+}
 
 Installer.prototype.File = function (file, cb) {
 	this.callback = cb;
@@ -112,13 +115,26 @@ Installer.prototype.File = function (file, cb) {
 	this.filePath = path.join( process.cwd(), file );
 	this.targetFile = path.join(Installer.BASE_PATH, '/', '.' + this.fileName);
 };
+
+
 _File = Installer.prototype.File;
 util.inherits( _File, events.EventEmitter );
 
-_File.prototype.overwrite = function () {};
+_File.prototype.overwrite = function () {
+	var self = this;
+
+	fs.unlink( this.targetFile, function (err) {
+		if (err) {
+			throw err;
+		}
+		
+		self.symlink();
+	});
+};
 _File.prototype.backup = function () {};
 _File.prototype.symlink = function () {
 	var self = this;
+	console.log(this.files);
 
 	if (path.existsSync( this.targetFile )) {
 		this.emit('file exists', this);
