@@ -37,9 +37,16 @@ Installer.prototype.processFiles = function () {
 	}
 
 	// Use next file in stack
-	this.handleFile( this.files.pop(), function nextFile () {
-		self.files.length && self.handleFile( self.files.pop(), nextFile );
-	});
+	function nextFile () {
+		console.log(self.files.length);
+		if (self.files.length) {
+			self.handleFile( self.files.pop(), nextFile );
+		} else {
+			self._closePrompt();
+		}
+	};
+
+	this.handleFile( this.files.pop(), nextFile );
 };
 
 Installer.prototype.handleFile = function (file, cb) {
@@ -54,7 +61,7 @@ Installer.prototype.handleFile = function (file, cb) {
 			'File ' + data.fileName + ' already exists, what do you want to do? [o,b,q,?]\n',
 			self._stdin.bind( self ) 
 		);
-		self._interface.on('line', self._stdin);
+		self._interface.on('line', self._stdin.bind( self ));
 	});
 
 	this.currentFile.on('file transfer complete', cb);
@@ -63,12 +70,11 @@ Installer.prototype.handleFile = function (file, cb) {
 };
 
 Installer.prototype._stdin = function (input) {
-	var close = true;
-
 	switch (input) {
 		case 'o':
 		case 'overwrite':
 			console.log('overwrite');
+			console.log(this.currentFile);
 			this.currentFile.overwrite();
 			break;
 
@@ -96,11 +102,7 @@ Installer.prototype._stdin = function (input) {
 			break;
 	}
 
-	if (close) {
-		this._closePrompt();
-	} else {
-		this._interface.prompt();
-	}
+	this._interface.prompt();
 }
 
 Installer.prototype._closePrompt = function () {
@@ -134,13 +136,12 @@ _File.prototype.overwrite = function () {
 _File.prototype.backup = function () {};
 _File.prototype.symlink = function () {
 	var self = this;
-	console.log(this.files);
 
 	if (path.existsSync( this.targetFile )) {
 		this.emit('file exists', this);
 	} else {
 		fs.symlink( this.filePath, this.targetFile, function () {
-			self.emit('file transfer complete', self);
+		//	self.emit('file transfer complete', self);
 		});
 	}
 };
