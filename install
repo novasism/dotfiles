@@ -3,6 +3,7 @@
 var glob = require('glob'),
 	fs = require('fs'),
 	path = require('path');
+	ijoasdoi
 
 var destination = path.join(process.env.HOME, '/Development/dotfiles-test');
 
